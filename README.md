@@ -14,6 +14,7 @@ After run by console command, or by call from python code, it:
 ## Requirements
 
 * Python 3.5+
+* You need to have your allure report folder generated (`allure generate './some/path/to/allure/generated/folder'`)
 
 ## Installation
 
