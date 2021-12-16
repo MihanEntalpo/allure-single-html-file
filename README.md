@@ -1,4 +1,4 @@
-# allure-single-html-file
+# Allure single html file builder
 
 Tool to build allure generated folder into a single html file
 
