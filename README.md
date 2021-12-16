@@ -8,7 +8,7 @@ After run by console command, or by call from python code, it:
 
 1. Reads contents of allure-generated folder
 2. Creates server.js file, which has all the data files inside and code to start fake XHR server
-3. Patches index.html file, so it's using server.js and sinon-9.2.4.js (Taken from [https://sinonjs.org/](here)), and could be run in any browser without --allow-file-access-from-files parameter of chrome browser
+3. Patches index.html file, so it's using server.js and sinon-9.2.4.js (Taken from [here](https://sinonjs.org/)), and could be run in any browser without --allow-file-access-from-files parameter of chrome browser
 4. Creates file complete.html with all files built-in in a single file
 
 ## Requirements
