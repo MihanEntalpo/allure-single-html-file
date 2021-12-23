@@ -1,11 +1,24 @@
 #! /usr/bin/env python3
+"""
+    Allure static files combiner.
+
+    Create single html files with all the allure report data, that can be opened from everywhere.
+
+    Usage:
+        python {sys.argv[0]} FOLDER_PATH
+
+        FOLDER_PATH - is a folder, where allure static files are located
+
+    Example:
+        python {sys.argv[0]} ../allure_gen
+"""
 
 # pylint: disable=line-too-long,missing-docstring
 
 import os
 import re
-import sys
 import base64
+import argparse
 from shutil import copyfile
 from bs4 import BeautifulSoup
 
@@ -206,23 +219,9 @@ def combine_allure(folder):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('folder', help='Group name')
+    args = parser.parse_args()
 
-    if len(sys.argv) < 2:
-        print(f"""
-    Allure static files combiner.
-
-    Create single html files with all the allure report data, that can be opened from everywhere.
-
-    Usage:
-        python {sys.argv[0]} FOLDER_PATH
-
-        FOLDER_PATH - is a folder, where allure static files are located
-
-    Example:
-        python {sys.argv[0]} ../allure_gen
-    """)
-        sys.exit(1)
-
-    folder = sys.argv[1].rstrip("/")
-
-    combine_allure(folder)
+    combine_allure(args.folder.rstrip("/"))
