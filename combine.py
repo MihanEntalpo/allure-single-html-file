@@ -1,10 +1,13 @@
+#! /usr/bin/env python3
+
+# pylint: disable=line-too-long,missing-docstring
+
 import os
 import re
-import json
-from shutil import copyfile
-from bs4 import BeautifulSoup, Tag
 import sys
 import base64
+from shutil import copyfile
+from bs4 import BeautifulSoup
 
 
 def combine_allure(folder):
@@ -12,14 +15,13 @@ def combine_allure(folder):
     cur_dir = os.path.dirname(os.path.realpath(__file__))
 
     print("> Folder to process is " + folder)
-
     print("> Checking for folder contents")
 
     files_should_be = ["index.html", "app.js", "styles.css"]
 
     for file in files_should_be:
         if not os.path.exists(folder + "/" + file):
-            raise Exception(f"ERROR: File {folder + '/' + file} doesnt exists, but it should!")            
+            raise Exception(f"ERROR: File {folder + '/' + file} doesnt exists, but it should!")
 
     default_content_type = "text/plain;charset=UTF-8"
 
@@ -34,7 +36,7 @@ def combine_allure(folder):
         "jpeg": "image/jpeg",
         "jpg": "image/jpg"
     }
-    
+
     base64_types = ["png", "jpeg", "jpg"]
 
     allowed_extensions = ["txt", "js", "css", "html", "json", "csv"]
@@ -47,11 +49,11 @@ def combine_allure(folder):
         if files:
             folder_url = re.sub(f"^{folder.rstrip('/')}/", "", path)
             if folder_url and folder_url != folder:
-                for file in files:            
+                for file in files:
                     file_url = folder_url + "/" + file
                     ext = file.split(".")[-1]
                     if ext not in allowed_extensions:
-                        print(f"WARNING: Unsupported extension: {ext} (file: {path}/{file}) skipping")                        
+                        print(f"WARNING: Unsupported extension: {ext} (file: {path}/{file}) skipping")
                     mime = content_types.get(ext, default_content_type)
                     if ext in base64_types:
                         with open(path + "/" + file, "rb") as f:
@@ -59,7 +61,7 @@ def combine_allure(folder):
                     else:
                         with open(path + "/" + file, "r") as f:
                             content = f.read()
-                            
+
                     data.append({"url": file_url, "mime": mime, "content": content, "base64": (ext in base64_types)})
 
     print(f"Found {len(data)} data files")
@@ -67,7 +69,7 @@ def combine_allure(folder):
     print("> Building server.js file...")
 
     with open(folder + "/server.js", "w") as f:
-        f.write(""" 
+        f.write("""
         function _base64ToArrayBuffer(base64) {
             var binary_string = window.atob(base64);
             var len = binary_string.length;
@@ -77,7 +79,7 @@ def combine_allure(folder):
             }
             return bytes.buffer;
         }
-        
+
         function _arrayBufferToBase64( buffer ) {
           var binary = '';
           var bytes = new Uint8Array( buffer );
@@ -87,16 +89,16 @@ def combine_allure(folder):
           }
           return window.btoa( binary );
         }
-        
+
         document.addEventListener("DOMContentLoaded", function() {
             var old_prefilter = jQuery.htmlPrefilter;
-            
+
             jQuery.htmlPrefilter = function(v) {
                 var regs = [
                     /<a[^>]*href="(?<url>[^"]*)"[^>]*>/,
                     /<img[^>]*src="(?<url>[^"]*)"\/?>/
                 ];
-                
+
                 for (i in regs)
                 {
                     reg = regs[i];
@@ -113,13 +115,13 @@ def combine_allure(folder):
                         }
                     }
                 }
-                
+
                 return old_prefilter(v);
             };
         });
-        
+
         """)
-    
+
         f.write("var server_data={\n")
         for d in data:
             url = d['url']
@@ -131,9 +133,9 @@ def combine_allure(folder):
                 content = d['content'].replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
                 f.write(f""" "{url}": "{content}", \n""")
         f.write("};\n")
-        
+
         f.write("    var server = sinon.fakeServer.create();\n")
-        
+
         for d in data:
             content_type = d['mime']
             url = d['url']
@@ -153,7 +155,6 @@ def combine_allure(folder):
 
     print("sinon-9.2.4.js is copied")
 
-
     print("> Reading index.html file")
     with open(folder + "/index.html", "r") as f:
         index_html = f.read()
@@ -168,7 +169,6 @@ def combine_allure(folder):
         print("Done")
     else:
         print("> Skipping patching of index.html as it's already patched")
-            
 
     print("> Parsing index.html")
     soup = BeautifulSoup(''.join(index_html), features="html.parser")
@@ -195,34 +195,34 @@ def combine_allure(folder):
                 tag.replaceWith(full_script_tag)
 
     print("Done")
-            
+
     with open(folder + "/complete.html", "w") as f:
         f.write(str(soup))
-        
+
     print(f"> Saving result as {folder}/complete.html")
 
     size = os.path.getsize(folder + '/complete.html')
     print(f"Done. Complete file size is:{size}")
-        
-    
+
+
 if __name__ == '__main__':
-    
+
     if len(sys.argv) < 2:
-        print(f"""    
+        print(f"""
     Allure static files combiner.
 
     Create single html files with all the allure report data, that can be opened from everywhere.
-        
+
     Usage:
         python {sys.argv[0]} FOLDER_PATH
 
         FOLDER_PATH - is a folder, where allure static files are located
-        
+
     Example:
         python {sys.argv[0]} ../allure_gen
     """)
-        exit(1)
+        sys.exit(1)
 
     folder = sys.argv[1].rstrip("/")
-    
+
     combine_allure(folder)
