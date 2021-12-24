@@ -47,12 +47,13 @@ def combine_allure(folder):
         "html": "text/html",
         "png": "image/png",
         "jpeg": "image/jpeg",
-        "jpg": "image/jpg"
+        "jpg": "image/jpg",
+        "gif": "image/gif"
     }
 
-    base64_types = ["png", "jpeg", "jpg"]
+    base64_extensions = ["png", "jpeg", "jpg", "gif"]
 
-    allowed_extensions = ["txt", "js", "css", "html", "json", "csv"]
+    allowed_extensions = list(content_types.keys())
 
     data = []
 
@@ -66,23 +67,24 @@ def combine_allure(folder):
                     file_url = folder_url + "/" + file
                     ext = file.split(".")[-1]
                     if ext not in allowed_extensions:
-                        print(f"WARNING: Unsupported extension: {ext} (file: {path}/{file}) skipping")
+                        print(f"WARNING: Unsupported extension: {ext} (file: {path}/{file}) skipping (supported are: {allowed_extensions}")
+                        continue
                     mime = content_types.get(ext, default_content_type)
-                    if ext in base64_types:
+                    if ext in base64_extensions:
                         with open(path + "/" + file, "rb") as f:
                             content = base64.b64encode(f.read())
                     else:
                         with open(path + "/" + file, "r") as f:
                             content = f.read()
 
-                    data.append({"url": file_url, "mime": mime, "content": content, "base64": (ext in base64_types)})
+                    data.append({"url": file_url, "mime": mime, "content": content, "base64": (ext in base64_extensions)})
 
     print(f"Found {len(data)} data files")
 
     print("> Building server.js file...")
 
     with open(folder + "/server.js", "w") as f:
-        f.write("""
+        f.write(r"""
         function _base64ToArrayBuffer(base64) {
             var binary_string = window.atob(base64);
             var len = binary_string.length;
