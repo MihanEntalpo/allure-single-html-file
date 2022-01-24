@@ -30,12 +30,13 @@ def combine_allure(folder):
         "csv": "text/csv",
         "css": "text/css",
         "html": "text/html",
+        "htm": "text/html",
         "png": "image/png",
         "jpeg": "image/jpeg",
         "jpg": "image/jpg"
     }
     
-    base64_types = ["png", "jpeg", "jpg"]
+    base64_types = ["png", "jpeg", "jpg", "html", "htm"]
 
     allowed_extensions = ["txt", "js", "css", "html", "json", "csv"]
 
