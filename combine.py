@@ -143,7 +143,7 @@ def combine_allure(folder):
 
         f.write("var server_data={\n")
         for d in data:
-            url = d['url']
+            url = d['url'].replace(sep, "/")
             b64 = d['base64']
             if b64:
                 content = "data:" + d['mime'] + ";base64, " + d['content'].decode("utf-8")
@@ -157,7 +157,7 @@ def combine_allure(folder):
 
         for d in data:
             content_type = d['mime']
-            url = d['url']
+            url = d['url'].replace(sep, "/")
             f.write("""
                 server.respondWith("GET", "{url}", [
                       200, { "Content-Type": "{content_type}" }, server_data["{url}"],
