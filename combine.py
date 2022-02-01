@@ -65,7 +65,7 @@ def combine_allure(folder):
     
     for path, dirs, files in os.walk(folder):
         if files:
-            folder_url = re.sub(f"^{folder.rstrip(sep).replace(sep, re_sep}{re_sep}", "", path)
+            folder_url = re.sub(f"^{folder.rstrip(sep).replace(sep, re_sep)}{re_sep}", "", path)
             if folder_url and folder_url != folder:
                 for file in files:
                     file_url = folder_url + sep + file
