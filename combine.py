@@ -36,8 +36,8 @@ def combine_allure(folder):
     files_should_be = ["index.html", "app.js", "styles.css"]
 
     for file in files_should_be:
-        if not os.path.exists(folder + "/" + file):
-            raise Exception(f"ERROR: File {folder + '/' + file} doesnt exists, but it should!")
+        if not os.path.exists(folder + sep + file):
+            raise Exception(f"ERROR: File {folder + sep + file} doesnt exists, but it should!")
 
     default_content_type = "text/plain;charset=UTF-8"
 
@@ -78,7 +78,7 @@ def combine_allure(folder):
                         with open(path + sep + file, "rb") as f:
                             content = base64.b64encode(f.read())
                     else:
-                        with open(path + seo + file, "r") as f:
+                        with open(path + sep + file, "r") as f:
                             content = f.read()
 
                     data.append({"url": file_url, "mime": mime, "content": content, "base64": (ext in base64_extensions)})
