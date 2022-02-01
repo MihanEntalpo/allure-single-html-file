@@ -87,7 +87,7 @@ def combine_allure(folder):
 
     print("> Building server.js file...")
 
-    with open(f"{folder}{sep}server.js", "w") as f:
+    with open(f"{folder}{sep}server.js", "w", encoding="utf8") as f:
         f.write(r"""
         function _base64ToArrayBuffer(base64) {
             var binary_string = window.atob(base64);
@@ -182,7 +182,7 @@ def combine_allure(folder):
         print("> Patching index.html file to make it use sinon-9.2.4.js and server.js")
         index_html = index_html.replace("""<script src="app.js"></script>""", """<script src="sinon-9.2.4.js"></script><script src="server.js"></script><script src="app.js"></script>""")
 
-        with open(folder + f"{sep}index.html", "w") as f:
+        with open(folder + f"{sep}index.html", "w", encoding="utf8") as f:
             print("> Saving patched index.html file, so It can be opened without --allow-file-access-from-files")
             f.write(index_html)
         print("Done")
@@ -215,7 +215,7 @@ def combine_allure(folder):
 
     print("Done")
 
-    with open(folder + f"{sep}complete.html", "w") as f:
+    with open(folder + f"{sep}complete.html", "w", encoding="utf8") as f:
         f.write(str(soup))
 
     print(f"> Saving result as {folder}{sep}complete.html")
