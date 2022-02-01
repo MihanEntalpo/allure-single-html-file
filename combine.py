@@ -78,7 +78,7 @@ def combine_allure(folder):
                         with open(path + sep + file, "rb") as f:
                             content = base64.b64encode(f.read())
                     else:
-                        with open(path + sep + file, "r") as f:
+                        with open(path + sep + file, "r", encoding="utf8") as f:
                             content = f.read()
 
                     data.append({"url": file_url, "mime": mime, "content": content, "base64": (ext in base64_extensions)})
@@ -175,7 +175,7 @@ def combine_allure(folder):
     print("sinon-9.2.4.js is copied")
 
     print("> Reading index.html file")
-    with open(folder + f"{sep}index.html", "r") as f:
+    with open(folder + f"{sep}index.html", "r", encoding="utf8") as f:
         index_html = f.read()
 
     if "sinon-9.2.4.js" not in index_html:
@@ -195,7 +195,7 @@ def combine_allure(folder):
     for tag in soup.findAll('script'):
         file_path = folder + sep + tag['src']
         print("...", tag, file_path)
-        with open(file_path, "r") as ff:
+        with open(file_path, "r", encoding="utf8") as ff:
             file_content = ff.read()
             full_script_tag = soup.new_tag("script")
             full_script_tag.insert(0, file_content)
@@ -207,7 +207,7 @@ def combine_allure(folder):
         if tag['rel'] == ["stylesheet"]:
             file_path = folder + sep + tag['href']
             print("...", tag, file_path)
-            with open(file_path, "r") as ff:
+            with open(file_path, "r", encoding="utf8") as ff:
                 file_content = ff.read()
                 full_script_tag = soup.new_tag("style")
                 full_script_tag.insert(0, file_content)
