@@ -17,6 +17,9 @@ import argparse
 from shutil import copyfile
 from bs4 import BeautifulSoup
 
+sep = os.sep
+re_sep = os.sep if os.sep == "/" else r"\\"
+
 
 def combine_allure(folder):
     """
@@ -33,8 +36,8 @@ def combine_allure(folder):
     files_should_be = ["index.html", "app.js", "styles.css"]
 
     for file in files_should_be:
-        if not os.path.exists(folder + "/" + file):
-            raise Exception(f"ERROR: File {folder + '/' + file} doesnt exists, but it should!")
+        if not os.path.exists(folder + sep + file):
+            raise Exception(f"ERROR: File {folder + sep + file} doesnt exists, but it should!")
 
     default_content_type = "text/plain;charset=UTF-8"
 
@@ -59,23 +62,23 @@ def combine_allure(folder):
     data = []
 
     print("> Scanning folder for data files...")
-
+    
     for path, dirs, files in os.walk(folder):
         if files:
-            folder_url = re.sub(f"^{folder.rstrip('/')}/", "", path)
+            folder_url = re.sub(f"^{folder.rstrip(sep).replace(sep, re_sep)}{re_sep}", "", path)
             if folder_url and folder_url != folder:
                 for file in files:
-                    file_url = folder_url + "/" + file
+                    file_url = folder_url + sep + file
                     ext = file.split(".")[-1]
                     if ext not in allowed_extensions:
-                        print(f"WARNING: Unsupported extension: {ext} (file: {path}/{file}) skipping (supported are: {allowed_extensions}")
+                        print(f"WARNING: Unsupported extension: {ext} (file: {path}{sep}{file}) skipping (supported are: {allowed_extensions}")
                         continue
                     mime = content_types.get(ext, default_content_type)
                     if ext in base64_extensions:
-                        with open(path + "/" + file, "rb") as f:
+                        with open(path + sep + file, "rb") as f:
                             content = base64.b64encode(f.read())
                     else:
-                        with open(path + "/" + file, "r") as f:
+                        with open(path + sep + file, "r", encoding="utf8") as f:
                             content = f.read()
 
                     data.append({"url": file_url, "mime": mime, "content": content, "base64": (ext in base64_extensions)})
@@ -84,7 +87,7 @@ def combine_allure(folder):
 
     print("> Building server.js file...")
 
-    with open(folder + "/server.js", "w") as f:
+    with open(f"{folder}{sep}server.js", "w", encoding="utf8") as f:
         f.write(r"""
         function _base64ToArrayBuffer(base64) {
             var binary_string = window.atob(base64);
@@ -140,7 +143,7 @@ def combine_allure(folder):
 
         f.write("var server_data={\n")
         for d in data:
-            url = d['url']
+            url = d['url'].replace(sep, "/")
             b64 = d['base64']
             if b64:
                 content = "data:" + d['mime'] + ";base64, " + d['content'].decode("utf-8")
@@ -154,7 +157,7 @@ def combine_allure(folder):
 
         for d in data:
             content_type = d['mime']
-            url = d['url']
+            url = d['url'].replace(sep, "/")
             f.write("""
                 server.respondWith("GET", "{url}", [
                       200, { "Content-Type": "{content_type}" }, server_data["{url}"],
@@ -163,23 +166,23 @@ def combine_allure(folder):
 
         f.write("server.autoRespond = true;")
 
-    size = os.path.getsize(folder + '/server.js')
+    size = os.path.getsize(f'{folder}{sep}server.js')
     print(f"server.js is build, it's size is: {size} bytes")
 
     print("> Copying file sinon-9.2.4.js into folder...")
-    copyfile(cur_dir + "/sinon-9.2.4.js", folder + "/sinon-9.2.4.js")
+    copyfile(cur_dir + f"{sep}sinon-9.2.4.js", folder + f"{sep}sinon-9.2.4.js")
 
     print("sinon-9.2.4.js is copied")
 
     print("> Reading index.html file")
-    with open(folder + "/index.html", "r") as f:
+    with open(folder + f"{sep}index.html", "r", encoding="utf8") as f:
         index_html = f.read()
 
     if "sinon-9.2.4.js" not in index_html:
         print("> Patching index.html file to make it use sinon-9.2.4.js and server.js")
         index_html = index_html.replace("""<script src="app.js"></script>""", """<script src="sinon-9.2.4.js"></script><script src="server.js"></script><script src="app.js"></script>""")
 
-        with open(folder + "/index.html", "w") as f:
+        with open(folder + f"{sep}index.html", "w", encoding="utf8") as f:
             print("> Saving patched index.html file, so It can be opened without --allow-file-access-from-files")
             f.write(index_html)
         print("Done")
@@ -190,9 +193,9 @@ def combine_allure(folder):
     soup = BeautifulSoup(''.join(index_html), features="html.parser")
     print("> Filling script tags with real files contents")
     for tag in soup.findAll('script'):
-        file_path = folder + "/" + tag['src']
+        file_path = folder + sep + tag['src']
         print("...", tag, file_path)
-        with open(file_path, "r") as ff:
+        with open(file_path, "r", encoding="utf8") as ff:
             file_content = ff.read()
             full_script_tag = soup.new_tag("script")
             full_script_tag.insert(0, file_content)
@@ -202,9 +205,9 @@ def combine_allure(folder):
     print("> Replacing link tags with style tags with real file contents")
     for tag in soup.findAll('link'):
         if tag['rel'] == ["stylesheet"]:
-            file_path = folder + "/" + tag['href']
+            file_path = folder + sep + tag['href']
             print("...", tag, file_path)
-            with open(file_path, "r") as ff:
+            with open(file_path, "r", encoding="utf8") as ff:
                 file_content = ff.read()
                 full_script_tag = soup.new_tag("style")
                 full_script_tag.insert(0, file_content)
@@ -212,12 +215,12 @@ def combine_allure(folder):
 
     print("Done")
 
-    with open(folder + "/complete.html", "w") as f:
+    with open(folder + f"{sep}complete.html", "w", encoding="utf8") as f:
         f.write(str(soup))
 
-    print(f"> Saving result as {folder}/complete.html")
+    print(f"> Saving result as {folder}{sep}complete.html")
 
-    size = os.path.getsize(folder + '/complete.html')
+    size = os.path.getsize(folder + f'{sep}complete.html')
     print(f"Done. Complete file size is:{size}")
 
 
@@ -226,4 +229,4 @@ if __name__ == '__main__':
     parser.add_argument('folder', help='Folder path, where allure static files are located')
     args = parser.parse_args()
 
-    combine_allure(args.folder.rstrip("/"))
+    combine_allure(args.folder.rstrip(sep))
