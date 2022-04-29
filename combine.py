@@ -52,10 +52,12 @@ def combine_allure(folder):
         "png": "image/png",
         "jpeg": "image/jpeg",
         "jpg": "image/jpg",
-        "gif": "image/gif"
+        "gif": "image/gif",
+        "mp4": "video/mp4",
+        "avi": "vidao/avi"
     }
 
-    base64_extensions = ["png", "jpeg", "jpg", "gif", "html", "htm"]
+    base64_extensions = ["png", "jpeg", "jpg", "gif", "html", "htm", "mp4", "avi"]
 
     allowed_extensions = list(content_types.keys())
 
