@@ -49,6 +49,6 @@ combine_allure("./some/path/to/allure/generated/folder")
 
 ## TODO
 
-* Functionality to open image in new browser tab doesn't work yet.
+* Functionality to open image or video in new browser tab doesn't work yet.
 * Need to check for attached html-files (There are some rare problems with bad-crafted htmls)
 * Need functionality to return combined file as a string, not saving it to a file directly
