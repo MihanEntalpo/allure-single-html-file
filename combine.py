@@ -54,7 +54,8 @@ def combine_allure(folder):
         "jpg": "image/jpg",
         "gif": "image/gif",
         "mp4": "video/mp4",
-        "avi": "vidao/avi"
+        "avi": "video/avi",
+        "webm": "video/webm"
     }
 
     base64_extensions = ["png", "jpeg", "jpg", "gif", "html", "htm", "mp4", "avi"]
@@ -115,26 +116,45 @@ def combine_allure(folder):
             var old_prefilter = jQuery.htmlPrefilter;
 
             jQuery.htmlPrefilter = function(v) {
+            
                 var regs = [
-                    /<a[^>]*href="(?<url>[^"]*)"[^>]*>/,
-                    /<img[^>]*src="(?<url>[^"]*)"\/?>/
+                    /<a[^>]*href="(?<url>[^"]*)"[^>]*>/gi,
+                    /<img[^>]*src="(?<url>[^"]*)"\/?>/gi,
+                    /<source[^>]*src="(?<url>[^"]*)"/gi
                 ];
+                
+                var replaces = {};
 
                 for (i in regs)
                 {
                     reg = regs[i];
-                    m = reg.exec(v);
-                    if (m)
+
+                    var m = true;
+                    var n = 0;
+                    while (m && n < 100)
                     {
-                        if (m['groups'] && m['groups']['url'])
+                        n += 1;
+                        
+                        m = reg.exec(v);
+                        if (m)
                         {
-                            var url = m['groups']['url'];
-                            if (server_data.hasOwnProperty(url))
+                            if (m['groups'] && m['groups']['url'])
                             {
-                                v = v.replace(url, server_data[url]);
+                                var url = m['groups']['url'];
+                                if (server_data.hasOwnProperty(url))
+                                {
+                                    console.log(`Added url:${url} to be replaced with data of ${server_data[url].length} bytes length`);
+                                    replaces[url] = server_data[url];                                    
+                                }
                             }
                         }
                     }
+                }
+                
+                for (let src in replaces)
+                {
+                    let dest = replaces[src];
+                    v = v.replace(src, dest);
                 }
 
                 return old_prefilter(v);
