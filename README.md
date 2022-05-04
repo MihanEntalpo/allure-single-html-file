@@ -30,7 +30,7 @@ cd allure-single-html-file
 2. Install requirements (actually there are only BeautifulSoup)
 
 ```bash
-pip install -r ./requirements.tx
+pip install -r ./requirements.txt
 ```
 
 ## Run as console script
