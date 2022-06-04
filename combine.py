@@ -42,6 +42,7 @@ def combine_allure(folder):
     default_content_type = "text/plain;charset=UTF-8"
 
     content_types = {
+        "svg": "image/svg",
         "txt": "text/plain;charset=UTF-8",
         "js": "application/javascript",
         "json": "application/json",
@@ -171,7 +172,7 @@ def combine_allure(folder):
                 content = "data:" + d['mime'] + ";base64, " + d['content'].decode("utf-8")
                 f.write(f""" "{url}": "{content}", \n""")
             else:
-                content = d['content'].replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
+                content = d['content'].replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n").replace("<", "&lt;").replace(">", "&gt;")
                 f.write(f""" "{url}": "{content}", \n""")
         f.write("};\n")
 
