@@ -21,7 +21,7 @@ sep = os.sep
 re_sep = os.sep if os.sep == "/" else r"\\"
 
 
-def combine_allure(folder):
+def combine_allure(folder, dest_folder=None):
     """
     Read all files,
     create server.js,
@@ -238,18 +238,32 @@ def combine_allure(folder):
 
     print("Done")
 
-    with open(folder + f"{sep}complete.html", "w", encoding="utf8") as f:
+    if not dest_folder:
+        dest_folder = folder
+
+    if dest_folder and not os.path.exists(dest_folder):
+        os.makedirs(dest_folder)
+
+    with open(dest_folder + f"{sep}complete.html", "w", encoding="utf8") as f:
         f.write(str(soup))
 
-    print(f"> Saving result as {folder}{sep}complete.html")
+    print(f"> Saving result as {dest_folder}{sep}complete.html")
 
-    size = os.path.getsize(folder + f'{sep}complete.html')
+    size = os.path.getsize(dest_folder + f'{sep}complete.html')
     print(f"Done. Complete file size is:{size}")
+
+    print("remove temp files in source folder: server.js and sinon-9.2.4.js. --- start")
+    os.remove(f'{folder}{sep}server.js')
+    os.remove(f'{folder}{sep}sinon-9.2.4.js')
+    print("remove temp files in source folder: server.js and sinon-9.2.4.js. --- end")
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('folder', help='Folder path, where allure static files are located')
+    parser.add_argument('--dest', default=None,
+                        help='Folder path where the single html file will be stored. '
+                             'Default is None and .')
     args = parser.parse_args()
 
-    combine_allure(args.folder.rstrip(sep))
+    combine_allure(args.folder.rstrip(sep), args.dest)
