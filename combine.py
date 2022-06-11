@@ -20,21 +20,7 @@ from bs4 import BeautifulSoup
 sep = os.sep
 re_sep = os.sep if os.sep == "/" else r"\\"
 
-# ------------------ args ------------------ #
-parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-parser.add_argument('folder', help='Folder path, where allure static files are located')
-parser.add_argument('--dest', default=None,
-                    help='Folder path where the single html file will be stored. '
-                         'Default is None, so dest folder == allure static files folder.')
-parser.add_argument('--remove-temp-files', action="store_true",
-                    help='Whether remove temp files in source folder: server.js and sinon-9.2.4.js or not. '
-                         'Default is false')
-parser.add_argument("--auto-create-folders", action="store_true",
-                    help="Whether auto create dest folders or not when folder does not exist. Default is false.")
-args = parser.parse_args()
 
-
-# ------------------ main function ------------------ #
 def combine_allure(folder, dest_folder=None, remove_temp_files=False, auto_create_folders=False):
     """
     Read all files,
@@ -45,10 +31,15 @@ def combine_allure(folder, dest_folder=None, remove_temp_files=False, auto_creat
     if not dest_folder:
         dest_folder = folder
 
-    if dest_folder and not os.path.exists(dest_folder) and auto_create_folders:
-        print("Dest folder does not exists, create start...")
-        os.makedirs(dest_folder)
-        print("Done")
+    if dest_folder and not os.path.exists(dest_folder):
+        if not auto_create_folders:
+            raise FileNotFoundError(
+                "Dest folder does not exists, please create it first, "
+                "or you can use --auto-create-folders argument if in the command line.")
+        else:
+            print("Argument auto_create_folders is True, and Dest folder does not exists, so create it. --- start")
+            os.makedirs(dest_folder)
+            print("Done")
 
     cur_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -269,11 +260,24 @@ def combine_allure(folder, dest_folder=None, remove_temp_files=False, auto_creat
     print(f"Done. Complete file size is:{size}")
 
     if remove_temp_files:
-        print("remove temp files in source folder: server.js and sinon-9.2.4.js. --- start")
+        print("Argument remove_temp_files is True, "
+              "will remove temp files in allure report folder: server.js and sinon-9.2.4.js.")
         os.remove(f'{folder}{sep}server.js')
         os.remove(f'{folder}{sep}sinon-9.2.4.js')
-        print("remove temp files in source folder: server.js and sinon-9.2.4.js. --- end")
+        print("Done")
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('folder', help='Folder path, where allure static files are located')
+    parser.add_argument('--dest', default=None,
+                        help='Folder path where the single html file will be stored. '
+                             'Default is None, so dest folder == allure static files folder.')
+    parser.add_argument('--remove-temp-files', action="store_true",
+                        help='Whether remove temp files in source folder: server.js and sinon-9.2.4.js or not. '
+                             'Default is false')
+    parser.add_argument("--auto-create-folders", action="store_true",
+                        help="Whether auto create dest folders or not when folder does not exist. Default is false.")
+    args = parser.parse_args()
+
     combine_allure(args.folder.rstrip(sep), args.dest, args.remove_temp_files, args.auto_create_folders)
