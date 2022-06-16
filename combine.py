@@ -9,7 +9,7 @@ Example:
 
     or
 
-    pip install allure-single-html-file
+    pip install allure2html
     allure2html allure_report_dir [--dest xxx] [--remove-temp-file] [--auto-create-folders]
 
 """
