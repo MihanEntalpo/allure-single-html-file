@@ -42,7 +42,7 @@ python ./combine.py ./some/path/to/allure/generated/folder
 ## Import and use in python code
 
 ```python
-from combine import combine_allure
+from allure2html.combine import combine_allure
 
 combine_allure("./some/path/to/allure/generated/folder")
 ```
