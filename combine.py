@@ -5,7 +5,7 @@ Allure static files combiner.
 Create single html files with all the allure report data, that can be opened from everywhere.
 
 Example:
-    python3 ./allure2html/combine.py ../allure_gen [--dest xxx] [--remove-temp-file] [--auto-create-folders]
+    python3 ./combine.py ../allure_gen [--dest xxx] [--remove-temp-file] [--auto-create-folders]
 
     or
 
