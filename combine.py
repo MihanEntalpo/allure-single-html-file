@@ -9,8 +9,9 @@ Example:
 
     or
 
-    pip install allure2html
-    allure2html allure_report_dir [--dest xxx] [--remove-temp-file] [--auto-create-folders]
+    pip install allure-combine
+    allure-combine allure_report_dir [--dest xxx] [--remove-temp-file] [--auto-create-folders]
+    ac allure_report_dir [--dest xxx] [--remove-temp-file] [--auto-create-folders]
 
 """
 

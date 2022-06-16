@@ -6,8 +6,9 @@ import codecs
 from setuptools import setup, find_packages
 
 
-PACKAGE_NAME = "allure2html"
-CMD = "allure2html"
+PACKAGE_NAME = "allure-combine"
+CMD = "allure-combine"
+CMD_FOR_SHORT = "ac"
 
 
 def read(fname):
@@ -18,8 +19,8 @@ def read(fname):
 setup(
     name=PACKAGE_NAME,
     version='1.0.0',
-    author='Sine.wang',
-    author_email='sinecelia.wang@gmail.com',
+    author='MihanEntalpo Sine.wang',
+    author_email='mihanentalpo@yandex.ru sinecelia.wang@gmail.com',
     maintainer='Sine.wang',
     maintainer_email='sinecelia.wang@gmail.com',
     license='MIT',
@@ -51,7 +52,8 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            f'{CMD} = {PACKAGE_NAME}.combine:main'
+            f'{CMD} = {PACKAGE_NAME}.combine:main',
+            f'{CMD_FOR_SHORT} = {PACKAGE_NAME}.combine:main',
         ]
     },
 )
