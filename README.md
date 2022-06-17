@@ -18,8 +18,6 @@ After run by console command, or by call from python code, it:
 
 ## Installation
 
-(pip module not available yet, coming soon)
-
 1. Clone repo
 
 ```bash
@@ -31,7 +29,15 @@ cd allure-single-html-file
 
 ```bash
 pip install -r ./requirements.txt
+python setup.py install
 ```
+
+## Install with pip
+
+```shell
+pip install allure-combine
+```
+
 
 ## Run as console script
 
@@ -63,8 +69,12 @@ python ./combine.py ./some/path/to/allure/generated/folder --remove-temp-files
 
 ## Import and use in python code
 
+```shell
+pip install allure-combine
+```
+
 ```python
-from allure2html.combine import combine_allure
+from allure_combine import combine_allure
 
 # 1) Create complete.html in allure-generated folder
 combine_allure("./some/path/to/allure/generated/folder")
@@ -74,18 +84,55 @@ combine_allure("./some/path/to/allure/generated/folder", dest_folder="/tmp")
 
 # 3) Make sure that dest folder exists, create if not
 combine_allure(
-  "./some/path/to/allure/generated/folder", 
-  dest_folder="/tmp/allure-2022-05-05_12-20-01/result",
-  auto_create_folder=True
+    "./some/path/to/allure/generated/folder",
+    dest_folder="/tmp/allure-2022-05-05_12-20-01/result",
+    auto_create_folders=True
 )
 
 # 4) Remove sinon.js and server.js from allure folder after complete.html is generated:
 combine_allure(
-  "./some/path/to/allure/generated/folder", 
-  remove_temp_files=True
+    "./some/path/to/allure/generated/folder",
+    remove_temp_files=True
 )
 
 ```
+
+## Run with command
+
+0) Install with pip
+
+```shell
+pip install allure-combine
+```
+
+1) Create complete.html file inside the allure folder itself
+
+```bash
+allure-combine ./some/path/to/allure/generated/folder
+ac ./some/path/to/allure/generated/folder
+```
+
+2) Create complete.html file inside specified folder:
+
+```bash
+allure-combine ./some/path/to/allure/generated/folder --dest /tmp
+ac ./some/path/to/allure/generated/folder --dest /tmp
+```
+
+3) Ensure that specified dest folder exists (create if not)
+
+```bash
+allure-combine ./some/path/to/allure/generated/folder --dest /tmp/allure-2022-05-05_12-20-01/result --auto-create-folders
+ac ./some/path/to/allure/generated/folder --dest /tmp/allure-2022-05-05_12-20-01/result --auto-create-folders
+```
+
+4) Remove sinon.js and server.js from allure folder after complete.html is generated:
+
+```bash
+allure-combine ./some/path/to/allure/generated/folder --remove-temp-files
+ac ./some/path/to/allure/generated/folder --remove-temp-files
+```
+
 
 ## TODO
 

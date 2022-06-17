@@ -6,8 +6,7 @@ import codecs
 from setuptools import setup, find_packages
 
 
-PACKAGE_NAME = "allure-combine"
-CMD = "allure-combine"
+PACKAGE_NAME = CMD = "allure-combine"
 CMD_FOR_SHORT = "ac"
 
 
@@ -28,7 +27,7 @@ setup(
     description='Generate single HTML file from allure report.',
     long_description=read('README.md'),
     packages=find_packages(exclude=['contrib', 'docs', 'tests', 'build', 'dist']),
-    package_data={PACKAGE_NAME: ["sinon-*.js"]},
+    package_data={"allure_combine": ["sinon-*.js"]},
     python_requires='>=3.6',
     install_requires=['bs4>=0.0.1'],
     classifiers=[
@@ -52,8 +51,8 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            f'{CMD} = {PACKAGE_NAME}.combine:main',
-            f'{CMD_FOR_SHORT} = {PACKAGE_NAME}.combine:main',
+            f'{CMD} = allure_combine.combine:main',
+            f'{CMD_FOR_SHORT} = allure_combine.combine:main',
         ]
     },
 )
