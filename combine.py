@@ -5,7 +5,14 @@ Allure static files combiner.
 Create single html files with all the allure report data, that can be opened from everywhere.
 
 Example:
-    python3 ./combine.py ../allure_gen
+    python3 ./combine.py ../allure_gen [--dest xxx] [--remove-temp-file] [--auto-create-folders]
+
+    or
+
+    pip install allure-combine
+    allure-combine allure_report_dir [--dest xxx] [--remove-temp-file] [--auto-create-folders]
+    ac allure_report_dir [--dest xxx] [--remove-temp-file] [--auto-create-folders]
+
 """
 
 # pylint: disable=line-too-long
@@ -88,7 +95,8 @@ def combine_allure(folder, dest_folder=None, remove_temp_files=False, auto_creat
                     file_url = folder_url + sep + file
                     ext = file.split(".")[-1]
                     if ext not in allowed_extensions:
-                        print(f"WARNING: Unsupported extension: {ext} (file: {path}{sep}{file}) skipping (supported are: {allowed_extensions}")
+                        print(f"WARNING: Unsupported extension: "
+                              f"{ext} (file: {path}{sep}{file}) skipping (supported are: {allowed_extensions}")
                         continue
                     mime = content_types.get(ext, default_content_type)
                     if ext in base64_extensions:
@@ -98,7 +106,8 @@ def combine_allure(folder, dest_folder=None, remove_temp_files=False, auto_creat
                         with open(path + sep + file, "r", encoding="utf8") as f:
                             content = f.read()
 
-                    data.append({"url": file_url, "mime": mime, "content": content, "base64": (ext in base64_extensions)})
+                    data.append({"url": file_url, "mime": mime,
+                                 "content": content, "base64": (ext in base64_extensions)})
 
     print(f"Found {len(data)} data files")
 
@@ -185,7 +194,9 @@ def combine_allure(folder, dest_folder=None, remove_temp_files=False, auto_creat
                 content = "data:" + d['mime'] + ";base64, " + d['content'].decode("utf-8")
                 f.write(f""" "{url}": "{content}", \n""")
             else:
-                content = d['content'].replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n").replace("<", "&lt;").replace(">", "&gt;")
+                content = d['content'].replace("\\", "\\\\").replace('"', '\\"')\
+                    .replace("\n", "\\n").replace("<", "&lt;").replace(">", "&gt;")
+
                 f.write(f""" "{url}": "{content}", \n""")
         f.write("};\n")
 
@@ -216,7 +227,9 @@ def combine_allure(folder, dest_folder=None, remove_temp_files=False, auto_creat
 
     if "sinon-9.2.4.js" not in index_html:
         print("> Patching index.html file to make it use sinon-9.2.4.js and server.js")
-        index_html = index_html.replace("""<script src="app.js"></script>""", """<script src="sinon-9.2.4.js"></script><script src="server.js"></script><script src="app.js"></script>""")
+        index_html = index_html.replace(
+            """<script src="app.js"></script>""",
+            """<script src="sinon-9.2.4.js"></script><script src="server.js"></script><script src="app.js"></script>""")
 
         with open(folder + f"{sep}index.html", "w", encoding="utf8") as f:
             print("> Saving patched index.html file, so It can be opened without --allow-file-access-from-files")
@@ -267,7 +280,7 @@ def combine_allure(folder, dest_folder=None, remove_temp_files=False, auto_creat
         print("Done")
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('folder', help='Folder path, where allure static files are located')
     parser.add_argument('--dest', default=None,
@@ -281,3 +294,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     combine_allure(args.folder.rstrip(sep), args.dest, args.remove_temp_files, args.auto_create_folders)
+
+
+if __name__ == '__main__':
+    main()
