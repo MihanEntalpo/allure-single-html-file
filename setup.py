@@ -18,7 +18,7 @@ def read(fname):
 
 setup(
     name=PACKAGE_NAME,
-    version='1.0.4',
+    version='1.0.5',
     author='MihanEntalpo, Sine.wang',
     author_email='mihanentalpo@yandex.ru, sinecelia.wang@gmail.com',
     maintainer='Sine.wang',
