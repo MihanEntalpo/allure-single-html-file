@@ -6,7 +6,8 @@ import codecs
 from setuptools import setup, find_packages
 
 
-PACKAGE_NAME = CMD = "allure-combine"
+CMD = "allure-combine"
+PACKAGE_NAME = "allure_combine"
 CMD_FOR_SHORT = "ac"
 
 
@@ -17,7 +18,7 @@ def read(fname):
 
 setup(
     name=PACKAGE_NAME,
-    version='1.0.0',
+    version='1.0.4',
     author='MihanEntalpo, Sine.wang',
     author_email='mihanentalpo@yandex.ru, sinecelia.wang@gmail.com',
     maintainer='Sine.wang',

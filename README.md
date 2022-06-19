@@ -45,7 +45,7 @@ python setup.py install
 
 ## Run as console script
 
-If you have cloned repo, not installed module via pip, replace `allure-combine` with `python ./combine.py` in following commands:
+If you have cloned repo, not installed module via pip, replace `allure-combine` with `python ./allure_combine/combine.py` in following commands:
 
 1) Create complete.html file inside the allure folder itself
 
