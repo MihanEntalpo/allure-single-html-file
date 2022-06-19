@@ -18,6 +18,17 @@ After run by console command, or by call from python code, it:
 
 ## Installation
 
+
+### Install with pip
+
+```shell
+pip install allure-combine
+```
+
+or:
+
+### Install manually
+
 1. Clone repo
 
 ```bash
@@ -32,38 +43,33 @@ pip install -r ./requirements.txt
 python setup.py install
 ```
 
-## Install with pip
-
-```shell
-pip install allure-combine
-```
-
-
 ## Run as console script
+
+If you have cloned repo, not installed module via pip, replace `allure-combine` with `python ./combine.py` in following commands:
 
 1) Create complete.html file inside the allure folder itself
 
 ```bash
-python ./combine.py ./some/path/to/allure/generated/folder
+allure-combine ./some/path/to/allure/generated/folder
 ```
 
 2) Create complete.html file inside specified folder:
 
 ```bash
-python ./combine.py ./some/path/to/allure/generated/folder --dest /tmp
+allure-combine ./some/path/to/allure/generated/folder --dest /tmp
 ```
 
 3) Ensure that specified dest folder exists (create if not)
 
 ```bash
-python ./combine.py ./some/path/to/allure/generated/folder --dest /tmp/allure-2022-05-05_12-20-01/result --auto-create-folders
+allure-combine ./some/path/to/allure/generated/folder --dest /tmp/allure-2022-05-05_12-20-01/result --auto-create-folders
 ```
 
 4) Remove sinon.js and server.js from allure folder after complete.html is generated:
 
 
 ```bash
-python ./combine.py ./some/path/to/allure/generated/folder --remove-temp-files
+allure-combine ./some/path/to/allure/generated/folder --remove-temp-files
 ```
 
 
