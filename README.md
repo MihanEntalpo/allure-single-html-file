@@ -103,43 +103,6 @@ combine_allure(
 
 ```
 
-## Run with command
-
-0) Install with pip
-
-```shell
-pip install allure-combine
-```
-
-1) Create complete.html file inside the allure folder itself
-
-```bash
-allure-combine ./some/path/to/allure/generated/folder
-ac ./some/path/to/allure/generated/folder
-```
-
-2) Create complete.html file inside specified folder:
-
-```bash
-allure-combine ./some/path/to/allure/generated/folder --dest /tmp
-ac ./some/path/to/allure/generated/folder --dest /tmp
-```
-
-3) Ensure that specified dest folder exists (create if not)
-
-```bash
-allure-combine ./some/path/to/allure/generated/folder --dest /tmp/allure-2022-05-05_12-20-01/result --auto-create-folders
-ac ./some/path/to/allure/generated/folder --dest /tmp/allure-2022-05-05_12-20-01/result --auto-create-folders
-```
-
-4) Remove sinon.js and server.js from allure folder after complete.html is generated:
-
-```bash
-allure-combine ./some/path/to/allure/generated/folder --remove-temp-files
-ac ./some/path/to/allure/generated/folder --remove-temp-files
-```
-
-
 ## TODO
 
 * Functionality to open image or video in new browser tab doesn't work yet.
