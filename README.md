@@ -72,6 +72,11 @@ allure-combine ./some/path/to/allure/generated/folder --dest /tmp/allure-2022-05
 allure-combine ./some/path/to/allure/generated/folder --remove-temp-files
 ```
 
+5) If html/json files what should be utf-8 is has broken encoding, ignore errors:
+```bash
+allure-combine ./some/path/to/allure/generated/folder --ignore-utf8-errors
+```
+
 
 ## Import and use in python code
 
@@ -100,6 +105,13 @@ combine_allure(
     "./some/path/to/allure/generated/folder",
     remove_temp_files=True
 )
+
+# 5) If html/json files what should be utf-8 is has broken encoding, ignore errors:
+combine_allure(
+    "./some/path/to/allure/generated/folder",
+    ignore_utf8_errors=True
+)
+
 
 ```
 

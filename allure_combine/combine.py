@@ -28,7 +28,7 @@ sep = os.sep
 re_sep = os.sep if os.sep == "/" else r"\\"
 
 
-def combine_allure(folder, dest_folder=None, remove_temp_files=False, auto_create_folders=False):
+def combine_allure(folder, dest_folder=None, remove_temp_files=False, auto_create_folders=False, ignore_utf8_errors=False):
     """
     Read all files,
     create server.js,
@@ -92,22 +92,25 @@ def combine_allure(folder, dest_folder=None, remove_temp_files=False, auto_creat
             folder_url = re.sub(f"^{folder.rstrip(sep).replace(sep, re_sep)}{re_sep}", "", path)
             if folder_url and folder_url != folder:
                 for file in files:
-                    file_url = folder_url + sep + file
-                    ext = file.split(".")[-1]
-                    if ext not in allowed_extensions:
-                        print(f"WARNING: Unsupported extension: "
-                              f"{ext} (file: {path}{sep}{file}) skipping (supported are: {allowed_extensions}")
-                        continue
-                    mime = content_types.get(ext, default_content_type)
-                    if ext in base64_extensions:
-                        with open(path + sep + file, "rb") as f:
-                            content = base64.b64encode(f.read())
-                    else:
-                        with open(path + sep + file, "r", encoding="utf8") as f:
-                            content = f.read()
+                    try:
+                        file_url = folder_url + sep + file
+                        ext = file.split(".")[-1]
+                        if ext not in allowed_extensions:
+                            print(f"WARNING: Unsupported extension: "
+                                  f"{ext} (file: {path}{sep}{file}) skipping (supported are: {allowed_extensions}")
+                            continue
+                        mime = content_types.get(ext, default_content_type)
+                        if ext in base64_extensions:
+                            with open(path + sep + file, "rb") as f:
+                                content = base64.b64encode(f.read())
+                        else:
+                            with open(path + sep + file, "r", encoding="utf8", errors='ignore' if ignore_utf8_errors else "strict") as f:
+                                content = f.read()
 
-                    data.append({"url": file_url, "mime": mime,
-                                 "content": content, "base64": (ext in base64_extensions)})
+                        data.append({"url": file_url, "mime": mime,
+                                     "content": content, "base64": (ext in base64_extensions)})
+                    except UnicodeDecodeError as e:
+                        print(f"Error on reading file {folder_url + sep + file}: {e}. Use --ignore-utf8-errors argument to skip this type of errors")
 
     print(f"Found {len(data)} data files")
 
@@ -291,9 +294,11 @@ def main():
                              'Default is false')
     parser.add_argument("--auto-create-folders", action="store_true",
                         help="Whether auto create dest folders or not when folder does not exist. Default is false.")
+    parser.add_argument("--ignore-utf8-errors", action="store_true",
+                        help="If test files does contain some broken unicode, decode errors would be ignored")
     args = parser.parse_args()
 
-    combine_allure(args.folder.rstrip(sep), args.dest, args.remove_temp_files, args.auto_create_folders)
+    combine_allure(args.folder.rstrip(sep), args.dest, args.remove_temp_files, args.auto_create_folders, args.ignore_utf8_errors)
 
 
 if __name__ == '__main__':
