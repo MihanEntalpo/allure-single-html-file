@@ -69,6 +69,7 @@ def combine_allure(folder, dest_folder=None, remove_temp_files=False, auto_creat
         "csv": "text/csv",
         "css": "text/css",
         "html": "text/html",
+        "xml": "text/xml",
         "htm": "text/html",
         "png": "image/png",
         "jpeg": "image/jpeg",
