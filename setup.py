@@ -29,7 +29,7 @@ setup(
     long_description=read('README.md'),
     long_description_content_type="text/markdown",
     packages=find_packages(exclude=['contrib', 'docs', 'tests', 'build', 'dist']),
-    package_data={"allure_combine": ["sinon-*.js"]},
+    package_data={"allure_combine": ["*.js"]},
     python_requires='>=3.6',
     install_requires=['bs4>=0.0.1'],
     classifiers=[

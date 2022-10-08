@@ -5,302 +5,204 @@ Allure static files combiner.
 Create single html files with all the allure report data, that can be opened from everywhere.
 
 Example:
-    python3 ./combine.py ../allure_gen [--dest xxx] [--remove-temp-file] [--auto-create-folders]
+    python3 ./combine.py ../allure_gen [--dest xxx] [--auto-create-folders]
 
     or
 
     pip install allure-combine
-    allure-combine allure_report_dir [--dest xxx] [--remove-temp-file] [--auto-create-folders]
-    ac allure_report_dir [--dest xxx] [--remove-temp-file] [--auto-create-folders]
+    allure-combine allure_report_dir [--dest xxx] [--auto-create-folders]
+    ac allure_report_dir [--dest xxx] [--auto-create-folders]
 
 """
-
 # pylint: disable=line-too-long
 
-import os
-import re
+import json
 import base64
 import argparse
-from shutil import copyfile
+import typing
+from pathlib import Path
+
+import bs4
 from bs4 import BeautifulSoup
 
-sep = os.sep
-re_sep = os.sep if os.sep == "/" else r"\\"
+
+HERE_DIR = Path(__file__).parent
+SINON_JS = HERE_DIR/"sinon-9.2.4.js"
+SERVER_JS = HERE_DIR/"server.js"
+DEFAULT_HTML = "complete.html"
+DEFAULT_CONTENT_TYPE = "text/plain;charset=UTF-8"
+CONTENT_TYPES = {
+    "svg": "image/svg",
+    "txt": "text/plain;charset=UTF-8",
+    "js": "application/javascript",
+    "json": "application/json",
+    "csv": "text/csv",
+    "css": "text/css",
+    "html": "text/html",
+    "xml": "text/xml",
+    "htm": "text/html",
+    "png": "image/png",
+    "jpeg": "image/jpeg",
+    "jpg": "image/jpg",
+    "gif": "image/gif",
+    "mp4": "video/mp4",
+    "avi": "video/avi",
+    "webm": "video/webm"
+}
+BASE64_EXTENSIONS = ["png", "jpeg", "jpg", "gif", "html", "htm", "mp4", "avi"]
+ALLOWED_EXTENSIONS = list(CONTENT_TYPES.keys())
 
 
-def combine_allure(folder, dest_folder=None, remove_temp_files=False, auto_create_folders=False, ignore_utf8_errors=False, dest_filename="complete.html"):
-    """
-    Read all files,
-    create server.js,
-    then run server.js,
-    """
+def _render_server_template(template: str, data: typing.Iterable[typing.Dict[str, typing.Union[str, bytes]]]) -> str:
+    print(f"> Building fake js server", end="... ")
 
-    if not dest_folder:
-        dest_folder = folder
+    responses = [r'''server.respondWith(
+    "GET", "%(url)s", [200, { "Content-Type": "%(mime)s", }, server_data["%(url)s"],]
+);''' % d for d in data]
+    jsondata = {d["url"]: ("data:{mime};base64,{content}" if d["base64"] else "{content}").format(**d) for d in data}
 
-    if dest_folder and not os.path.exists(dest_folder):
-        if not auto_create_folders:
-            raise FileNotFoundError(
-                "Dest folder does not exists, please create it first, "
-                "or you can use --auto-create-folders argument if in the command line.")
-        else:
-            print("Argument auto_create_folders is True, and Dest folder does not exists, so create it. --- start")
-            os.makedirs(dest_folder)
-            print("Done")
+    server_js = (
+        template
+        .replace('"{{jsondata}}"', json.dumps(jsondata, indent=4))
+        .replace('"{{responses}}"', "\n".join(responses))
+    )
 
-    cur_dir = os.path.dirname(os.path.realpath(__file__))
+    print(f"Done, size is {len(server_js)}b")
 
-    print("> Folder to process is " + folder)
-    print("> Checking for folder contents")
+    return server_js
 
-    files_should_be = ["index.html", "app.js", "styles.css"]
 
-    for file in files_should_be:
-        if not os.path.exists(folder + sep + file):
-            raise Exception(f"ERROR: File {folder + sep + file} doesnt exists, but it should!")
+def _read(file: Path):
+    contents = file.read_text(encoding="utf-8")
+    print("Done")
+    return contents
 
-    default_content_type = "text/plain;charset=UTF-8"
 
-    content_types = {
-        "svg": "image/svg",
-        "txt": "text/plain;charset=UTF-8",
-        "js": "application/javascript",
-        "json": "application/json",
-        "csv": "text/csv",
-        "css": "text/css",
-        "html": "text/html",
-        "xml": "text/xml",
-        "htm": "text/html",
-        "png": "image/png",
-        "jpeg": "image/jpeg",
-        "jpg": "image/jpg",
-        "gif": "image/gif",
-        "mp4": "video/mp4",
-        "avi": "video/avi",
-        "webm": "video/webm"
-    }
+def _check_allure_dir(folder: Path):
+    print(f"> Checking {folder} for allure contents", end="... ")
+    for file in [folder / name for name in ["index.html", "app.js", "styles.css"]]:
+        if not file.exists():
+            raise FileNotFoundError(f"ERROR: File {file} doesnt exists, but it should!")
+    print("Done")
 
-    base64_extensions = ["png", "jpeg", "jpg", "gif", "html", "htm", "mp4", "avi"]
 
-    allowed_extensions = list(content_types.keys())
+def _insert_code_before(soup: bs4.BeautifulSoup, code: str, tag: bs4.Tag):
+    script = soup.new_tag("script")
+    script.string = code
+    tag.insert_before(script)
+    return script
 
+
+def _replace_tag_with_content(old_tag: bs4.Tag, new_tag: bs4.Tag, file: Path):
+    print(f"  {old_tag} -> {file}")
+    new_tag.string = file.read_text(encoding="utf8")
+    old_tag.replaceWith(new_tag)
+    return new_tag
+
+
+def _load_allure_data(folder: Path, ignore_utf8_errors=False):
+    print("> Scanning folder for data files", end="... ")
     data = []
+    skipped = []
+    for filepath in folder.glob("**/*.*"):
+        ext = filepath.suffix.replace('.', '')
+        if filepath.parent == folder:
+            continue
+        elif ext not in ALLOWED_EXTENSIONS:
+            skipped.append(filepath)
+            continue
 
-    print("> Scanning folder for data files...")
-    
-    for path, dirs, files in os.walk(folder):
-        if files:
-            folder_url = re.sub(f"^{folder.rstrip(sep).replace(sep, re_sep)}{re_sep}", "", path)
-            if folder_url and folder_url != folder:
-                for file in files:
-                    try:
-                        file_url = folder_url + sep + file
-                        ext = file.split(".")[-1]
-                        if ext not in allowed_extensions:
-                            print(f"WARNING: Unsupported extension: "
-                                  f"{ext} (file: {path}{sep}{file}) skipping (supported are: {allowed_extensions}")
-                            continue
-                        mime = content_types.get(ext, default_content_type)
-                        if ext in base64_extensions:
-                            with open(path + sep + file, "rb") as f:
-                                content = base64.b64encode(f.read())
-                        else:
-                            with open(path + sep + file, "r", encoding="utf8", errors='ignore' if ignore_utf8_errors else "strict") as f:
-                                content = f.read()
+        try:
+            content = filepath.read_bytes()
+            if ext in BASE64_EXTENSIONS:
+                content = base64.b64encode(content)
+            data.append({
+                "content": content.decode(encoding="utf8", errors='ignore' if ignore_utf8_errors else "strict"),
+                "url": str(filepath.relative_to(folder)).replace("\\", "/"),
+                "mime": CONTENT_TYPES.get(ext, DEFAULT_CONTENT_TYPE),
+                "base64": ext in BASE64_EXTENSIONS
+            })
+        except UnicodeDecodeError as e:
+            print(f"Error on reading file {filepath}: {e}. Use --ignore-utf8-errors argument to skip this type of errors")
+    if skipped:
+        print(f"  WARNING: Found {len(skipped)} file{'s' if len(skipped)> 1 else''} with unsupported extensions"
+              f" (supported: {ALLOWED_EXTENSIONS}). Skipped files: {', '.join(str(s) for s in skipped)}")
+    print(f"Done, found {len(data)} files")
+    return data
 
-                        data.append({"url": file_url, "mime": mime,
-                                     "content": content, "base64": (ext in base64_extensions)})
-                    except UnicodeDecodeError as e:
-                        print(f"Error on reading file {folder_url + sep + file}: {e}. Use --ignore-utf8-errors argument to skip this type of errors")
 
-    print(f"Found {len(data)} data files")
+def combine_allure_to_str(
+    folder: typing.Union[str, Path],
+    ignore_utf8_errors=False,
+    sinon_js_path=SINON_JS,
+    server_js_path=SERVER_JS,
+):
+    folder = Path(folder)
+    _check_allure_dir(folder)
 
-    print("> Building server.js file...")
-
-    with open(f"{folder}{sep}server.js", "w", encoding="utf8") as f:
-        f.write(r"""
-        function _base64ToArrayBuffer(base64) {
-            var binary_string = window.atob(base64);
-            var len = binary_string.length;
-            var bytes = new Uint8Array(len);
-            for (var i = 0; i < len; i++) {
-                bytes[i] = binary_string.charCodeAt(i);
-            }
-            return bytes.buffer;
-        }
-
-        function _arrayBufferToBase64( buffer ) {
-          var binary = '';
-          var bytes = new Uint8Array( buffer );
-          var len = bytes.byteLength;
-          for (var i = 0; i < len; i++) {
-             binary += String.fromCharCode( bytes[ i ] );
-          }
-          return window.btoa( binary );
-        }
-
-        document.addEventListener("DOMContentLoaded", function() {
-            var old_prefilter = jQuery.htmlPrefilter;
-
-            jQuery.htmlPrefilter = function(v) {
-            
-                var regs = [
-                    /<a[^>]*href="(?<url>[^"]*)"[^>]*>/gi,
-                    /<img[^>]*src="(?<url>[^"]*)"\/?>/gi,
-                    /<source[^>]*src="(?<url>[^"]*)"/gi
-                ];
-                
-                var replaces = {};
-
-                for (i in regs)
-                {
-                    reg = regs[i];
-
-                    var m = true;
-                    var n = 0;
-                    while (m && n < 100)
-                    {
-                        n += 1;
-                        
-                        m = reg.exec(v);
-                        if (m)
-                        {
-                            if (m['groups'] && m['groups']['url'])
-                            {
-                                var url = m['groups']['url'];
-                                if (server_data.hasOwnProperty(url))
-                                {
-                                    console.log(`Added url:${url} to be replaced with data of ${server_data[url].length} bytes length`);
-                                    replaces[url] = server_data[url];                                    
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                for (let src in replaces)
-                {
-                    let dest = replaces[src];
-                    v = v.replace(src, dest);
-                }
-
-                return old_prefilter(v);
-            };
-        });
-
-        """)
-
-        f.write("var server_data={\n")
-        for d in data:
-            url = d['url'].replace(sep, "/")
-            b64 = d['base64']
-            if b64:
-                content = "data:" + d['mime'] + ";base64, " + d['content'].decode("utf-8")
-                f.write(f""" "{url}": "{content}", \n""")
-            else:
-                content = d['content'].replace("\\", "\\\\").replace('"', '\\"')\
-                    .replace("\n", "\\n").replace("<", "&lt;").replace(">", "&gt;")
-
-                f.write(f""" "{url}": "{content}", \n""")
-        f.write("};\n")
-
-        f.write("    var server = sinon.fakeServer.create();\n")
-
-        for d in data:
-            content_type = d['mime']
-            url = d['url'].replace(sep, "/")
-            f.write("""
-                server.respondWith("GET", "{url}", [
-                      200, { "Content-Type": "{content_type}" }, server_data["{url}"],
-                ]);
-            """.replace("{url}", url).replace("{content_type}", content_type))
-
-        f.write("server.autoRespond = true;")
-
-    size = os.path.getsize(f'{folder}{sep}server.js')
-    print(f"server.js is build, it's size is: {size} bytes")
-
-    print("> Copying file sinon-9.2.4.js into folder...")
-    copyfile(cur_dir + f"{sep}sinon-9.2.4.js", folder + f"{sep}sinon-9.2.4.js")
-
-    print("sinon-9.2.4.js is copied")
-
-    print("> Reading index.html file")
-    with open(folder + f"{sep}index.html", "r", encoding="utf8") as f:
-        index_html = f.read()
-
-    if "sinon-9.2.4.js" not in index_html:
-        print("> Patching index.html file to make it use sinon-9.2.4.js and server.js")
-        index_html = index_html.replace(
-            """<script src="app.js"></script>""",
-            """<script src="sinon-9.2.4.js"></script><script src="server.js"></script><script src="app.js"></script>""")
-
-        with open(folder + f"{sep}index.html", "w", encoding="utf8") as f:
-            print("> Saving patched index.html file, so It can be opened without --allow-file-access-from-files")
-            f.write(index_html)
-        print("Done")
-    else:
-        print("> Skipping patching of index.html as it's already patched")
-
-    print("> Parsing index.html")
-    soup = BeautifulSoup(''.join(index_html), features="html.parser")
-    print("> Filling script tags with real files contents")
-    for tag in soup.findAll('script'):
-        file_path = folder + sep + tag['src']
-        print("...", tag, file_path)
-        with open(file_path, "r", encoding="utf8") as ff:
-            file_content = ff.read()
-            full_script_tag = soup.new_tag("script")
-            full_script_tag.insert(0, file_content)
-            tag.replaceWith(full_script_tag)
+    index_html = folder / "index.html"
+    print(f"> Reading contents of {index_html}", end="... ")
+    html = index_html.read_text(encoding="utf8")
+    soup = BeautifulSoup(html, features="html.parser")
     print("Done")
 
-    print("> Replacing link tags with style tags with real file contents")
-    for tag in soup.findAll('link'):
-        if tag['rel'] == ["stylesheet"]:
-            file_path = folder + sep + tag['href']
-            print("...", tag, file_path)
-            with open(file_path, "r", encoding="utf8") as ff:
-                file_content = ff.read()
-                full_script_tag = soup.new_tag("style")
-                full_script_tag.insert(0, file_content)
-                tag.replaceWith(full_script_tag)
+    print("> Replacing script tags with their files contents")
+    for old_tag in soup.findAll('script'):
+        _replace_tag_with_content(old_tag, soup.new_tag("script"), folder / old_tag['src'])
 
+    print("> Replacing {tag} tags with their files contents")
+    for old_tag in soup.findAll("link", rel="stylesheet"):
+        _replace_tag_with_content(old_tag, soup.new_tag("style"), folder / old_tag['href'])
+
+    server_code = _render_server_template(
+        server_js_path.read_text(encoding="utf8"),
+        _load_allure_data(folder, ignore_utf8_errors)
+    )
+    print(f"> Injecting sinonjs and server code into index html", end="... ")
+    app_script = soup.find("script")
+    _insert_code_before(soup, sinon_js_path.read_text("utf8"), app_script)
+    _insert_code_before(soup, server_code, app_script)
     print("Done")
 
-    with open(dest_folder + f"{sep}{dest_filename}", "w", encoding="utf8") as f:
-        f.write(str(soup))
+    return str(soup)
 
-    print(f"> Saving result as {dest_folder}{sep}{dest_filename}")
 
-    size = os.path.getsize(dest_folder + f'{sep}{dest_filename}')
-    print(f"Done. Complete file size is:{size}")
+def combine_allure(folder: typing.Union[str, Path], destination: typing.Union[str, Path] = None, auto_create_folders=False, ignore_utf8_errors=False):
+    if not destination:
+        destination = folder
+    destination = Path(destination)
 
-    if remove_temp_files:
-        print("Argument remove_temp_files is True, "
-              "will remove temp files in allure report folder: server.js and sinon-9.2.4.js.")
-        os.remove(f'{folder}{sep}server.js')
-        os.remove(f'{folder}{sep}sinon-9.2.4.js')
-        print("Done")
+    if destination.suffix != ".html":
+        destination = Path(destination) / DEFAULT_HTML
+
+    if not destination.parent.exists() and not auto_create_folders:
+        raise FileNotFoundError(
+            "Dest folder does not exists, please create it first, "
+            "or you can use --auto-create-folders argument if in the command line.")
+    elif auto_create_folders:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+
+    combined_html = combine_allure_to_str(folder, ignore_utf8_errors=ignore_utf8_errors)
+
+    print(f"> Saving result as {destination}", end="... ")
+    destination.write_text(combined_html, encoding="utf8")
+    print(f"Done, Complete file size is:{destination.stat().st_size}b")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('folder', help='Folder path, where allure static files are located')
     parser.add_argument('--dest', default=None,
-                        help='Folder path where the single html file will be stored. '
-                             'Default is None, so dest folder == allure static files folder.')
-    parser.add_argument('--filename', default="complete.html", help='Name of the combined html file')
-    parser.add_argument('--remove-temp-files', action="store_true",
-                        help='Whether remove temp files in source folder: server.js and sinon-9.2.4.js or not. '
-                             'Default is false')
+                        help='Path where the single html file will be stored. '
+                             f'If argument does not end with .html, {DEFAULT_HTML} is appended.'
+                             f'If omitted, output is written to {DEFAULT_HTML} in allure static files folder')
     parser.add_argument("--auto-create-folders", action="store_true",
                         help="Whether auto create dest folders or not when folder does not exist. Default is false.")
     parser.add_argument("--ignore-utf8-errors", action="store_true",
                         help="If test files does contain some broken unicode, decode errors would be ignored")
     args = parser.parse_args()
 
-    combine_allure(args.folder.rstrip(sep), args.dest, args.remove_temp_files, args.auto_create_folders, args.ignore_utf8_errors, args.filename)
+    combine_allure(args.folder, args.dest, args.auto_create_folders, args.ignore_utf8_errors)
 
 
 if __name__ == '__main__':
