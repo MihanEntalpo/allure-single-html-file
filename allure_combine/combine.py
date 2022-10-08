@@ -28,7 +28,7 @@ sep = os.sep
 re_sep = os.sep if os.sep == "/" else r"\\"
 
 
-def combine_allure(folder, dest_folder=None, remove_temp_files=False, auto_create_folders=False, ignore_utf8_errors=False):
+def combine_allure(folder, dest_folder=None, remove_temp_files=False, auto_create_folders=False, ignore_utf8_errors=False, dest_filename="complete.html"):
     """
     Read all files,
     create server.js,
@@ -268,12 +268,12 @@ def combine_allure(folder, dest_folder=None, remove_temp_files=False, auto_creat
 
     print("Done")
 
-    with open(dest_folder + f"{sep}complete.html", "w", encoding="utf8") as f:
+    with open(dest_folder + f"{sep}{dest_filename}", "w", encoding="utf8") as f:
         f.write(str(soup))
 
-    print(f"> Saving result as {dest_folder}{sep}complete.html")
+    print(f"> Saving result as {dest_folder}{sep}{dest_filename}")
 
-    size = os.path.getsize(dest_folder + f'{sep}complete.html')
+    size = os.path.getsize(dest_folder + f'{sep}{dest_filename}')
     print(f"Done. Complete file size is:{size}")
 
     if remove_temp_files:
@@ -290,6 +290,7 @@ def main():
     parser.add_argument('--dest', default=None,
                         help='Folder path where the single html file will be stored. '
                              'Default is None, so dest folder == allure static files folder.')
+    parser.add_argument('--filename', default="complete.html", help='Name of the combined html file')
     parser.add_argument('--remove-temp-files', action="store_true",
                         help='Whether remove temp files in source folder: server.js and sinon-9.2.4.js or not. '
                              'Default is false')
@@ -299,7 +300,7 @@ def main():
                         help="If test files does contain some broken unicode, decode errors would be ignored")
     args = parser.parse_args()
 
-    combine_allure(args.folder.rstrip(sep), args.dest, args.remove_temp_files, args.auto_create_folders, args.ignore_utf8_errors)
+    combine_allure(args.folder.rstrip(sep), args.dest, args.remove_temp_files, args.auto_create_folders, args.ignore_utf8_errors, args.filename)
 
 
 if __name__ == '__main__':
