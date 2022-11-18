@@ -16,18 +16,17 @@ Example:
 """
 # pylint: disable=line-too-long
 
-import json
 import base64
+import json
 import typing
 from pathlib import Path
 
 import bs4
 from bs4 import BeautifulSoup
 
-
 HERE_DIR = Path(__file__).parent
-SINON_JS = HERE_DIR/"sinon-9.2.4.js"
-SERVER_JS = HERE_DIR/"server.js"
+SINON_JS = HERE_DIR / "sinon-9.2.4.js"
+SERVER_JS = HERE_DIR / "server.js"
 DEFAULT_HTML = "complete.html"
 DEFAULT_CONTENT_TYPE = "text/plain;charset=UTF-8"
 CONTENT_TYPES = {
@@ -46,25 +45,35 @@ CONTENT_TYPES = {
     "gif": "image/gif",
     "mp4": "video/mp4",
     "avi": "video/avi",
-    "webm": "video/webm"
+    "webm": "video/webm",
 }
 BASE64_EXTENSIONS = ["png", "jpeg", "jpg", "gif", "html", "htm", "mp4", "avi"]
 ALLOWED_EXTENSIONS = list(CONTENT_TYPES.keys())
 
 
-def _render_server_template(template: str, data: typing.Iterable[typing.Dict[str, typing.Union[str, bytes]]]) -> str:
-    print(f"> Building fake js server", end="... ")
+def _render_server_template(
+    template: str, data: typing.Iterable[typing.Dict[str, typing.Union[str, bytes]]]
+) -> str:
+    print("> Building fake js server", end="... ")
 
-    responses = [r'''server.respondWith(
-    "GET", "%(url)s", [200, { "Content-Type": "%(mime)s", }, server_data["%(url)s"],]
-);''' % d for d in data]
-    jsondata = {d["url"]: ("data:{mime};base64,{content}" if d["base64"] else "{content}").format(**d) for d in data}
+    responses = [
+        r"""\
+server.respondWith(
+  "GET", "%(url)s", [200, { "Content-Type": "%(mime)s", }, server_data["%(url)s"],]
+);"""
+        % d
+        for d in data
+    ]
+    jsondata = {
+        d["url"]: (
+            "data:{mime};base64,{content}" if d["base64"] else "{content}"
+        ).format(**d)
+        for d in data
+    }
 
-    server_js = (
-        template
-        .replace('"{{jsondata}}"', json.dumps(jsondata, indent=4))
-        .replace('"{{responses}}"', "\n".join(responses))
-    )
+    server_js = template.replace(
+        '"{{jsondata}}"', json.dumps(jsondata, indent=4)
+    ).replace('"{{responses}}"', "\n".join(responses))
 
     print(f"Done, size is {len(server_js)}b")
 
@@ -104,7 +113,7 @@ def _load_allure_data(folder: Path, ignore_utf8_errors=False):
     data = []
     skipped = []
     for filepath in folder.glob("**/*.*"):
-        ext = filepath.suffix.replace('.', '')
+        ext = filepath.suffix.replace(".", "")
         if filepath.parent == folder:
             continue
         elif ext not in ALLOWED_EXTENSIONS:
@@ -115,17 +124,26 @@ def _load_allure_data(folder: Path, ignore_utf8_errors=False):
             content = filepath.read_bytes()
             if ext in BASE64_EXTENSIONS:
                 content = base64.b64encode(content)
-            data.append({
-                "content": content.decode(encoding="utf8", errors='ignore' if ignore_utf8_errors else "strict"),
-                "url": str(filepath.relative_to(folder)).replace("\\", "/"),
-                "mime": CONTENT_TYPES.get(ext, DEFAULT_CONTENT_TYPE),
-                "base64": ext in BASE64_EXTENSIONS
-            })
+            data.append(
+                {
+                    "content": content.decode(
+                        encoding="utf8",
+                        errors="ignore" if ignore_utf8_errors else "strict",
+                    ),
+                    "url": str(filepath.relative_to(folder)).replace("\\", "/"),
+                    "mime": CONTENT_TYPES.get(ext, DEFAULT_CONTENT_TYPE),
+                    "base64": ext in BASE64_EXTENSIONS,
+                }
+            )
         except UnicodeDecodeError as e:
-            print(f"Error on reading file {filepath}: {e}. Use --ignore-utf8-errors argument to skip this type of errors")
+            print(
+                f"Error on reading file {filepath}: {e}. Use --ignore-utf8-errors argument to skip this type of errors"
+            )
     if skipped:
-        print(f"  WARNING: Found {len(skipped)} file{'s' if len(skipped)> 1 else''} with unsupported extensions"
-              f" (supported: {ALLOWED_EXTENSIONS}). Skipped files: {', '.join(str(s) for s in skipped)}")
+        print(
+            f"  WARNING: Found {len(skipped)} file{'s' if len(skipped)> 1 else''} with unsupported extensions"
+            f" (supported: {ALLOWED_EXTENSIONS}). Skipped files: {', '.join(str(s) for s in skipped)}"
+        )
     print(f"Done, found {len(data)} files")
     return data
 
@@ -146,18 +164,22 @@ def combine_allure_to_str(
     print("Done")
 
     print("> Replacing script tags with their files contents")
-    for old_tag in soup.findAll('script'):
-        _replace_tag_with_content(old_tag, soup.new_tag("script"), folder / old_tag['src'])
+    for old_tag in soup.findAll("script"):
+        _replace_tag_with_content(
+            old_tag, soup.new_tag("script"), folder / old_tag["src"]
+        )
 
     print("> Replacing link tags with their files contents")
     for old_tag in soup.findAll("link", rel="stylesheet"):
-        _replace_tag_with_content(old_tag, soup.new_tag("style"), folder / old_tag['href'])
+        _replace_tag_with_content(
+            old_tag, soup.new_tag("style"), folder / old_tag["href"]
+        )
 
     server_code = _render_server_template(
         server_js_path.read_text(encoding="utf8"),
-        _load_allure_data(folder, ignore_utf8_errors)
+        _load_allure_data(folder, ignore_utf8_errors),
     )
-    print(f"> Injecting sinonjs and server code into index html", end="... ")
+    print("> Injecting sinonjs and server code into index html", end="... ")
     app_script = soup.find("script")
     _insert_code_before(soup, sinon_js_path.read_text("utf8"), app_script)
     _insert_code_before(soup, server_code, app_script)
@@ -166,7 +188,12 @@ def combine_allure_to_str(
     return str(soup)
 
 
-def combine_allure(folder: typing.Union[str, Path], destination: typing.Union[str, Path] = None, auto_create_folders=False, ignore_utf8_errors=False):
+def combine_allure(
+    folder: typing.Union[str, Path],
+    destination: typing.Union[str, Path] = None,
+    auto_create_folders=False,
+    ignore_utf8_errors=False,
+):
     if not destination:
         destination = folder
     destination = Path(destination)
@@ -177,7 +204,8 @@ def combine_allure(folder: typing.Union[str, Path], destination: typing.Union[st
     if not destination.parent.exists() and not auto_create_folders:
         raise FileNotFoundError(
             "Dest folder does not exists, please create it first, "
-            "or you can use --auto-create-folders argument if in the command line.")
+            "or you can use --auto-create-folders argument if in the command line."
+        )
     elif auto_create_folders:
         destination.parent.mkdir(parents=True, exist_ok=True)
 
