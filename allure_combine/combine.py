@@ -18,7 +18,6 @@ Example:
 
 import json
 import base64
-import argparse
 import typing
 from pathlib import Path
 
@@ -136,7 +135,7 @@ def combine_allure_to_str(
     ignore_utf8_errors=False,
     sinon_js_path=SINON_JS,
     server_js_path=SERVER_JS,
-):
+) -> str:
     folder = Path(folder)
     _check_allure_dir(folder)
 
@@ -150,7 +149,7 @@ def combine_allure_to_str(
     for old_tag in soup.findAll('script'):
         _replace_tag_with_content(old_tag, soup.new_tag("script"), folder / old_tag['src'])
 
-    print("> Replacing {tag} tags with their files contents")
+    print("> Replacing link tags with their files contents")
     for old_tag in soup.findAll("link", rel="stylesheet"):
         _replace_tag_with_content(old_tag, soup.new_tag("style"), folder / old_tag['href'])
 
@@ -188,22 +187,4 @@ def combine_allure(folder: typing.Union[str, Path], destination: typing.Union[st
     destination.write_text(combined_html, encoding="utf8")
     print(f"Done, Complete file size is:{destination.stat().st_size}b")
 
-
-def main():
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('folder', help='Folder path, where allure static files are located')
-    parser.add_argument('--dest', default=None,
-                        help='Path where the single html file will be stored. '
-                             f'If argument does not end with .html, {DEFAULT_HTML} is appended.'
-                             f'If omitted, output is written to {DEFAULT_HTML} in allure static files folder')
-    parser.add_argument("--auto-create-folders", action="store_true",
-                        help="Whether auto create dest folders or not when folder does not exist. Default is false.")
-    parser.add_argument("--ignore-utf8-errors", action="store_true",
-                        help="If test files does contain some broken unicode, decode errors would be ignored")
-    args = parser.parse_args()
-
-    combine_allure(args.folder, args.dest, args.auto_create_folders, args.ignore_utf8_errors)
-
-
-if __name__ == '__main__':
-    main()
+    return combined_html

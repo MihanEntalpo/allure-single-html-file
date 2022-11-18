@@ -53,8 +53,8 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            f'{CMD} = allure_combine.combine:main',
-            f'{CMD_FOR_SHORT} = allure_combine.combine:main',
+            f'{CMD} = allure_combine.__main__:main',
+            f'{CMD_FOR_SHORT} = allure_combine.__main__:main',
         ]
     },
 )
