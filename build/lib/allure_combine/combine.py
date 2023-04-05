@@ -28,7 +28,7 @@ sep = os.sep
 re_sep = os.sep if os.sep == "/" else r"\\"
 
 
-def combine_allure(folder, dest_folder=None, file_name=None, remove_temp_files=False, auto_create_folders=False, ignore_utf8_errors=False):
+def combine_allure(folder, dest_folder=None, remove_temp_files=False, auto_create_folders=False, ignore_utf8_errors=False):
     """
     Read all files,
     create server.js,
@@ -267,21 +267,14 @@ def combine_allure(folder, dest_folder=None, file_name=None, remove_temp_files=F
                 tag.replaceWith(full_script_tag)
 
     print("Done")
-    
-    if not file_name:
-        with open(dest_folder + f"{sep}complete.html", "w", encoding="utf8") as f:
-            f.write(str(soup))
-        print(f"> Saving result as {dest_folder}{sep}complete.html")
-        size = os.path.getsize(dest_folder + f'{sep}complete.html')
-        print(f"Done. Complete file size is:{size}")
-    else:
-        with open(dest_folder + f"{sep}{file_name}.html", "w", encoding="utf8") as f:
-            f.write(str(soup))
 
-        print(f"> Saving result as {dest_folder}{sep}{file_name}.html")
+    with open(dest_folder + f"{sep}complete.html", "w", encoding="utf8") as f:
+        f.write(str(soup))
 
-        size = os.path.getsize(dest_folder + f'{sep}{file_name}.html')
-        print(f"Done. Complete file size is:{size}")
+    print(f"> Saving result as {dest_folder}{sep}complete.html")
+
+    size = os.path.getsize(dest_folder + f'{sep}complete.html')
+    print(f"Done. Complete file size is:{size}")
 
     if remove_temp_files:
         print("Argument remove_temp_files is True, "
@@ -304,12 +297,9 @@ def main():
                         help="Whether auto create dest folders or not when folder does not exist. Default is false.")
     parser.add_argument("--ignore-utf8-errors", action="store_true",
                         help="If test files does contain some broken unicode, decode errors would be ignored")
-    parser.add_argument('--filename', default=None,
-                        help='The filename of the final Html report file. '
-                             'Default filename will be complete.html')
     args = parser.parse_args()
 
-    combine_allure(args.folder.rstrip(sep), args.dest, args.filename, args.remove_temp_files, args.auto_create_folders, args.ignore_utf8_errors)
+    combine_allure(args.folder.rstrip(sep), args.dest, args.remove_temp_files, args.auto_create_folders, args.ignore_utf8_errors)
 
 
 if __name__ == '__main__':
