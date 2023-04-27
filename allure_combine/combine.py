@@ -57,8 +57,7 @@ def _render_server_template(
     print("> Building fake js server", end="... ")
 
     responses = [
-        r"""\
-server.respondWith(
+        r"""server.respondWith(
   "GET", "%(url)s", [200, { "Content-Type": "%(mime)s", }, server_data["%(url)s"],]
 );"""
         % d
