@@ -120,3 +120,7 @@ combine_allure(
 * Functionality to open image or video in new browser tab doesn't work yet.
 * Need functionality to return combined file as a string, not saving it to a file directly
 * Functionality to not change source files at all, work in a read-only filesystem
+
+## Ports to other languages:
+
+* Javascript port: https://github.com/aruiz-caritsqa/allure-single-html-file-js
