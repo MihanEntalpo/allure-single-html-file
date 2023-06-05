@@ -1,7 +1,3 @@
+from .combine import combine_allure, combine_allure_to_str
 
-from .combine import combine_allure
-
-
-__all__ = [
-    "combine_allure"
-]
+__all__ = ["combine_allure", "combine_allure_to_str"]
