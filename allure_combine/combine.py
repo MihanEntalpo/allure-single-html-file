@@ -246,25 +246,33 @@ def combine_allure(folder, dest_folder=None, remove_temp_files=False, auto_creat
     soup = BeautifulSoup(''.join(index_html), features="html.parser")
     print("> Filling script tags with real files contents")
     for tag in soup.findAll('script'):
-        file_path = folder + sep + tag['src']
-        print("...", tag, file_path)
-        with open(file_path, "r", encoding="utf8") as ff:
-            file_content = ff.read()
-            full_script_tag = soup.new_tag("script")
-            full_script_tag.insert(0, file_content)
-            tag.replaceWith(full_script_tag)
+        if 'src' in tag:
+            file_path = folder + sep + tag['src']
+            if os.path.exists(file_path):
+                print("...", tag, file_path)                
+                with open(file_path, "r", encoding="utf8") as ff:
+                    file_content = ff.read()
+                    full_script_tag = soup.new_tag("script")
+                    full_script_tag.insert(0, file_content)
+                    tag.replaceWith(full_script_tag)
+            else:
+                print("...", tag, "skipped due to file", file_path, "does not exists")
     print("Done")
 
     print("> Replacing link tags with style tags with real file contents")
     for tag in soup.findAll('link'):
-        if tag['rel'] == ["stylesheet"]:
-            file_path = folder + sep + tag['href']
-            print("...", tag, file_path)
-            with open(file_path, "r", encoding="utf8") as ff:
-                file_content = ff.read()
-                full_script_tag = soup.new_tag("style")
-                full_script_tag.insert(0, file_content)
-                tag.replaceWith(full_script_tag)
+        if 'rel' in tag:
+            if tag['rel'] == ["stylesheet"]:
+                file_path = folder + sep + tag['href']
+                if os.path.exists(file_path):
+                    print("...", tag, file_path)
+                    with open(file_path, "r", encoding="utf8") as ff:
+                        file_content = ff.read()
+                        full_script_tag = soup.new_tag("style")
+                        full_script_tag.insert(0, file_content)
+                        tag.replaceWith(full_script_tag)
+                else:
+                    print("...", tag, "skipped due to file", file_path, "does not exists")
 
     print("Done")
 

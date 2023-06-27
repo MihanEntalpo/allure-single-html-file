@@ -1,0 +1,5 @@
+venv/*
+allure_combine.egg-info/*
+__pycache__/*
+*.pyc
+
