@@ -1,5 +1,7 @@
 # Versions and changes
 
+## 1.0.10. Just bumped version to solve pypi issue
+
 ## 1.0.9. Fixed bug with non-existing script as link tag files being replaced.
 
 ## 1.0.8. Added xml files support
