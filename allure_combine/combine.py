@@ -246,7 +246,7 @@ def combine_allure(folder, dest_folder=None, remove_temp_files=False, auto_creat
     soup = BeautifulSoup(''.join(index_html), features="html.parser")
     print("> Filling script tags with real files contents")
     for tag in soup.findAll('script'):
-        if 'src' in tag:
+        if tag.has_attr('src'):
             file_path = folder + sep + tag['src']
             if os.path.exists(file_path):
                 print("...", tag, file_path)                
@@ -261,7 +261,7 @@ def combine_allure(folder, dest_folder=None, remove_temp_files=False, auto_creat
 
     print("> Replacing link tags with style tags with real file contents")
     for tag in soup.findAll('link'):
-        if 'rel' in tag:
+        if tag.has_attr('rel'):
             if tag['rel'] == ["stylesheet"]:
                 file_path = folder + sep + tag['href']
                 if os.path.exists(file_path):

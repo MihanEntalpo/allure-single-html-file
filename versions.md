@@ -1,5 +1,7 @@
 # Versions and changes
 
+## 1.0.11. Fixed bug introduced earlier in 1.0.10
+
 ## 1.0.10. Just bumped version to solve pypi issue
 
 ## 1.0.9. Fixed bug with non-existing script as link tag files being replaced.
