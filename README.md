@@ -11,6 +11,12 @@ After run by console command, or by call from python code, it:
 3. Patches index.html file, so it's using server.js and sinon-9.2.4.js (Taken from [here](https://sinonjs.org/)), and could be run in any browser without --allow-file-access-from-files parameter of chrome browser
 4. Creates file complete.html with all files built-in in a single file
 
+## Attention! Update!
+
+According to this merged pull request https://github.com/allure-framework/allure2/pull/2072 Allure itself now has command line argument `--single-file` that make it produce report as a single html file. 
+As for now it's not described in official allure docs, but anyway it should make this package (allure-combine) useless.
+I'm encorage you to use Allure `--single-file` functionality, as it should work much better that my combiner!
+
 ## Requirements
 
 * Python 3.6+
