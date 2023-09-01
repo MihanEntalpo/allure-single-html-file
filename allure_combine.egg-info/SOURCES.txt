@@ -1,0 +1,12 @@
+LICENSE
+README.md
+setup.py
+allure_combine/__init__.py
+allure_combine/combine.py
+allure_combine/sinon-9.2.4.js
+allure_combine.egg-info/PKG-INFO
+allure_combine.egg-info/SOURCES.txt
+allure_combine.egg-info/dependency_links.txt
+allure_combine.egg-info/entry_points.txt
+allure_combine.egg-info/requires.txt
+allure_combine.egg-info/top_level.txt
